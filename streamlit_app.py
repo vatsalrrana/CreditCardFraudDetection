@@ -1,33 +1,86 @@
 import streamlit as st
 from predict_fraud import predict_fraud, feature_columns
 
-st.title('Credit Card Fraud Detection')
+# -------------------- PAGE CONFIG --------------------
+st.set_page_config(
+    page_title="Credit Card Fraud Detector",
+    page_icon="💳",
+    layout="wide"
+)
 
-st.markdown("Enter the transaction details below to predict if it's fraudulent.")
+# -------------------- HEADER --------------------
+st.markdown(
+    """
+    <h1 style='text-align: center; color: #ff4b4b;'>
+        💳 Credit Card Fraud Detection System
+    </h1>
+    <p style='text-align: center; font-size:18px;'>
+        Protecting your transactions with AI-powered fraud detection 🔐
+    </p>
+    <hr>
+    """,
+    unsafe_allow_html=True
+)
+
+# -------------------- SIDEBAR --------------------
+st.sidebar.header("🧾 Transaction Details")
+st.sidebar.write("Enter the transaction values below:")
+
+# Default values
+default_values = {
+    'Time': 0.0, 'Amount': 0.0,
+    **{f'V{i}': 0.0 for i in range(1, 29)}
+}
 
 input_data = {}
 
-default_values = {
-    'Time': 0.0, 'V1': 0.0, 'V2': 0.0, 'V3': 0.0, 'V4': 0.0, 'V5': 0.0,
-    'V6': 0.0, 'V7': 0.0, 'V8': 0.0, 'V9': 0.0, 'V10': 0.0,
-    'V11': 0.0, 'V12': 0.0, 'V13': 0.0, 'V14': 0.0, 'V15': 0.0,
-    'V16': 0.0, 'V17': 0.0, 'V18': 0.0, 'V19': 0.0, 'V20': 0.0,
-    'V21': 0.0, 'V22': 0.0, 'V23': 0.0, 'V24': 0.0, 'V25': 0.0,
-    'V26': 0.0, 'V27': 0.0, 'V28': 0.0, 'Amount': 0.0
-}
-
+# Sidebar inputs
 for feature in feature_columns:
-    input_data[feature] = st.number_input(f'Enter {feature}', value=default_values.get(feature, 0.0))
+    input_data[feature] = st.sidebar.number_input(
+        label=feature,
+        value=default_values.get(feature, 0.0),
+        format="%.4f"
+    )
 
-if st.button('Predict Fraud'):
-    predicted_class, probability_of_fraud = predict_fraud(input_data)
+# -------------------- MAIN ACTION --------------------
+st.markdown("### 🔍 Ready to analyze this transaction?")
 
-    st.write("--- Prediction Results ---")
+if st.button("🚀 Predict Fraud", use_container_width=True):
+
+    with st.spinner("Analyzing transaction... Please wait ⏳"):
+        predicted_class, probability_of_fraud = predict_fraud(input_data)
+
+    st.progress(min(int(probability_of_fraud * 100), 100))
+
+    st.markdown("---")
+    st.markdown("## 📊 Prediction Results")
+
     if predicted_class == 1:
-        st.error("**Fraudulent Transaction Detected!**")
-        st.write("Probability of Fraud: {:.4f}".format(probability_of_fraud))
-        st.warning("Please review this transaction carefully.")
+        st.error("🚨 **Fraudulent Transaction Detected!**")
+        st.metric(
+            label="Probability of Fraud",
+            value=f"{probability_of_fraud:.2%}"
+        )
+        st.warning(
+            "⚠️ This transaction looks risky. Please review it carefully or block it immediately."
+        )
     else:
-        st.success("**Legitimate Transaction.**")
-        st.write("Probability of Fraud: {:.4f}".format(probability_of_fraud))
-        st.info("This transaction appears to be safe.")
+        st.success("✅ **Legitimate Transaction**")
+        st.metric(
+            label="Probability of Fraud",
+            value=f"{probability_of_fraud:.2%}"
+        )
+        st.info(
+            "🎉 Good news! This transaction appears safe and trustworthy."
+        )
+
+# -------------------- FOOTER --------------------
+st.markdown(
+    """
+    <hr>
+    <p style='text-align:center; color:gray;'>
+        Powered by Machine Learning | Built with Vatsal Rana ❤️
+    </p>
+    """,
+    unsafe_allow_html=True
+)
